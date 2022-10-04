@@ -1267,8 +1267,8 @@ cnf-map = {
 <pre>
 kat-bundle = {
     &amp;(eat_profile: 265) =&gt; "http://arm.com/kat/1.0.0"
-    "kat" =&gt; bytes .cbor COSE-Sign1-kat
-    "psa-token" =&gt; bytes .cbor COSE-Sign1-psa-token
+    "kat" =&gt; COSE-Sign1-kat
+    "psa-token" =&gt; Tagged-COSE-psa-token
 }
 </pre>
 </div>
@@ -1290,19 +1290,24 @@ kat-bundle = {
         <div class="alignLeft art-cbor-diag art-text artwork" id="section-4-1.1">
 <pre>
 {
-    / nonce / 10: h'b91b03129222973c214e42bf31d6872a3ef2dbdda401fbd1f725d48d6bf9c817',
+    / nonce / 10: h'b91b03129222973c214e42bf31d6872a3ef2dbdda401fbd1
+f725d48d6bf9c817',
     / kak-pub / 2500: {
         / kty /  1: 2, / EC2 /
         / crv / -1: 1, / P-256 /
-        / x / -2: h'F0FFFA7BA35E76E44CA1F5446D327C8382A5A40E5F29745DF948346C7C88A5D3',
-        / y / -3: h'7CB4C4873CBB6F097562F61D5280768CD2CFE35FBA97E997280DBAAAE3AF92FE'
+        / x / -2: h'F0FFFA7BA35E76E44CA1F5446D327C8382A5A40E5F29745D
+F948346C7C88A5D3',
+        / y / -3: h'7CB4C4873CBB6F097562F61D5280768CD2CFE35FBA97E997
+280DBAAAE3AF92FE'
     },
     / cnf / 8: {
         / COSE_Key / 1: {
             / kty /  1: 2, / EC2 /
             / crv / -1: 1, / P-256 /
-            / x / -2: h'D7CC072DE2205BDC1537A543D53C60A6ACB62ECCD890C7FA27C9E354089BBE13',
-            / y / -3: h'F95E1D4B851A2CC80FFF87D8E23F22AFB725D535E515D020731E79A3B4E47120'
+            / x / -2: h'D7CC072DE2205BDC1537A543D53C60A6ACB62ECCD890
+C7FA27C9E354089BBE13',
+            / y / -3: h'F95E1D4B851A2CC80FFF87D8E23F22AFB725D535E515
+D020731E79A3B4E47120'
         }
     }
 }
@@ -1404,8 +1409,8 @@ start = kat-bundle
 
 kat-bundle = {
     &amp;(eat_profile: 265) =&gt; "http://arm.com/kat/1.0.0"
-    "kat" =&gt; bytes .cbor COSE-Sign1-kat
-    "psa-token" =&gt; bytes .cbor COSE-Sign1-psa-token
+    "kat" =&gt; COSE-Sign1-kat
+    "psa-token" =&gt; Tagged-COSE-psa-token
 }
 
 kat = {
@@ -1428,17 +1433,6 @@ COSE-Sign1-kat = [
 ]
 
 kat-protected-headers = {
-    &amp;(alg-id: 1) =&gt; int
-}
-
-COSE-Sign1-psa-token = [
-    protected: bytes .cbor psa-token-protected-headers
-    unprotected: {}
-    payload: bytes .cbor psa-token
-    signature: bytes
-]
-
-psa-token-protected-headers = {
     &amp;(alg-id: 1) =&gt; int
 }
 
@@ -1553,6 +1547,31 @@ psa-verification-service-indicator = (
         psa-verification-service-indicator-type
 )
 
+
+Tagged-COSE-psa-token = Tagged-COSE-Sign1-psa-token /
+                        Tagged-COSE-Mac0-psa-token
+
+Tagged-COSE-Sign1-psa-token = #6.18(COSE-Sign1-psa-token)
+
+COSE-Sign1-psa-token = [
+    protected: bytes .cbor psa-token-protected-headers
+    unprotected: {}
+    payload: bytes .cbor psa-token
+    signature: bytes
+]
+
+Tagged-COSE-Mac0-psa-token = #6.17(COSE-Mac0-psa-token)
+
+COSE-Mac0-psa-token = [
+    protected: bytes .cbor psa-token-protected-headers
+    unprotected: {}
+    payload: bytes .cbor psa-token
+    tag: bytes
+]
+
+psa-token-protected-headers = {
+    &amp;(alg-id: 1) =&gt; int
+}
 
 
 
