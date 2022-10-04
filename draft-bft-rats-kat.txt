@@ -62,12 +62,16 @@ Table of Contents
 
    1.  Introduction
    2.  Conventions and Definitions
-   3.  Examples
-   4.  Security Considerations
-   5.  IANA Considerations
-   6.  References
-     6.1.  Normative References
-     6.2.  Informative References
+   3.  Key Attesatation Token
+     3.1.  Proof-of-Possession
+     3.2.  KAT Bundle
+   4.  Examples
+   5.  Security Considerations
+   6.  IANA Considerations
+   7.  References
+     7.1.  Normative References
+     7.2.  Informative References
+   Appendix A.  Amalgamated CDDL
    Acknowledgments
    Authors' Addresses
 
@@ -88,33 +92,79 @@ Table of Contents
    In this document, CDDL [RFC8610] [RFC9165] is used to describe the
    data formats.
 
-   The examples in Section 3 use CBOR diagnostic notation defined in
+   The examples in Section 4 use CBOR diagnostic notation defined in
    Section 8 of [STD94] and Appendix G of [RFC8610].
 
    The reader is assumed to be familiar with the vocabulary and concepts
    defined in [I-D.ietf-rats-architecture].
 
-   start = []
+3.  Key Attesatation Token
 
-                         Figure 1: CDDL definition
+3.1.  Proof-of-Possession
 
-3.  Examples
+   [RFC8747]
 
-   []
+   KAS is the Issuer TLS-B is the Presenter TLS-A is the Recipient
 
-                               Figure 2: TODO
+   kat = {
+       &(eat_nonce: 10) => bstr .size (8..64)
+       &(cnf: 8) => ak-pub
+       &(kak-pub: 2500) => COSE_Key
+   }
 
-4.  Security Considerations
+   ak-pub = cnf-map
+
+   cnf-map = {
+       &(cose-key: 1) => COSE_Key
+   }
+
+                          Figure 1: KAT definition
+
+3.2.  KAT Bundle
+
+   [I-D.frost-rats-eat-collection]
+
+   kat-bundle = {
+       &(eat_profile: 265) => "http://arm.com/kat/1.0.0"
+       "kat" => bytes .cbor COSE-Sign1-kat
+       "psa-token" => bytes .cbor COSE-Sign1-psa-token
+   }
+
+                      Figure 2: KAT bundle definition
+
+4.  Examples
+
+{
+    / nonce / 10: h'b91b03129222973c214e42bf31d6872a3ef2dbdda401fbd1f725d48d6bf9c817',
+    / kak-pub / 2500: {
+        / kty /  1: 2, / EC2 /
+        / crv / -1: 1, / P-256 /
+        / x / -2: h'F0FFFA7BA35E76E44CA1F5446D327C8382A5A40E5F29745DF948346C7C88A5D3',
+        / y / -3: h'7CB4C4873CBB6F097562F61D5280768CD2CFE35FBA97E997280DBAAAE3AF92FE'
+    },
+    / cnf / 8: {
+        / COSE_Key / 1: {
+            / kty /  1: 2, / EC2 /
+            / crv / -1: 1, / P-256 /
+            / x / -2: h'D7CC072DE2205BDC1537A543D53C60A6ACB62ECCD890C7FA27C9E354089BBE13',
+            / y / -3: h'F95E1D4B851A2CC80FFF87D8E23F22AFB725D535E515D020731E79A3B4E47120'
+        }
+    }
+}
+
+                            Figure 3: KAT
+
+5.  Security Considerations
 
    TODO Security
 
-5.  IANA Considerations
+6.  IANA Considerations
 
    TODO IANA
 
-6.  References
+7.  References
 
-6.1.  Normative References
+7.1.  Normative References
 
    [I-D.frost-rats-eat-collection]
               Frost, S., "Entity Attestation Token (EAT) Collection
@@ -153,6 +203,11 @@ Table of Contents
               JSON Data Structures", RFC 8610, DOI 10.17487/RFC8610,
               June 2019, <https://www.rfc-editor.org/rfc/rfc8610>.
 
+   [RFC8747]  Jones, M., Seitz, L., Selander, G., Erdtman, S., and H.
+              Tschofenig, "Proof-of-Possession Key Semantics for CBOR
+              Web Tokens (CWTs)", RFC 8747, DOI 10.17487/RFC8747, March
+              2020, <https://www.rfc-editor.org/rfc/rfc8747>.
+
    [RFC9165]  Bormann, C., "Additional Control Operators for the Concise
               Data Definition Language (CDDL)", RFC 9165,
               DOI 10.17487/RFC9165, December 2021,
@@ -168,7 +223,7 @@ Table of Contents
               DOI 10.17487/RFC9052, August 2022,
               <https://www.rfc-editor.org/rfc/rfc9052>.
 
-6.2.  Informative References
+7.2.  Informative References
 
    [I-D.ietf-rats-architecture]
               Birkholz, H., Thaler, D., Richardson, M., Smith, N., and
@@ -178,11 +233,295 @@ Table of Contents
               <https://datatracker.ietf.org/doc/html/draft-ietf-rats-
               architecture-22>.
 
+Appendix A.  Amalgamated CDDL
+
+   start = kat-bundle
+
+   kat-bundle = {
+       &(eat_profile: 265) => "http://arm.com/kat/1.0.0"
+       "kat" => bytes .cbor COSE-Sign1-kat
+       "psa-token" => bytes .cbor COSE-Sign1-psa-token
+   }
+
+   kat = {
+       &(eat_nonce: 10) => bstr .size (8..64)
+       &(cnf: 8) => ak-pub
+       &(kak-pub: 2500) => COSE_Key
+   }
+
+   ak-pub = cnf-map
+
+   cnf-map = {
+       &(cose-key: 1) => COSE_Key
+   }
+
+   COSE-Sign1-kat = [
+       protected: bytes .cbor kat-protected-headers
+       unprotected: {}
+       payload: bytes .cbor kat
+       signature: bytes
+   ]
+
+   kat-protected-headers = {
+       &(alg-id: 1) => int
+   }
+
+   COSE-Sign1-psa-token = [
+       protected: bytes .cbor psa-token-protected-headers
+       unprotected: {}
+       payload: bytes .cbor psa-token
+       signature: bytes
+   ]
+
+   psa-token-protected-headers = {
+       &(alg-id: 1) => int
+   }
+
+   psa-token = {
+       psa-nonce
+       psa-instance-id
+       psa-verification-service-indicator
+       psa-profile
+       psa-implementation-id
+       psa-client-id
+       psa-lifecycle
+       psa-certification-reference
+       ? psa-boot-seed
+       psa-software-components
+   }
+
+   psa-client-id-key = 2394
+   psa-lifecycle-key = 2395
+   psa-implementation-id-key = 2396
+   psa-boot-seed-key = 2397
+   psa-certification-reference-key = 2398
+   psa-software-components-key = 2399
+   psa-verification-service-indicator-key = 2400
+
+   nonce-label = 10
+   ueid-label = 256
+   profile-label = 265
+
+   psa-hash-type = bytes .size 32 / bytes .size 48 / bytes .size 64
+
+   psa-boot-seed-type = bytes .size (8..32)
+
+   psa-boot-seed = (
+       psa-boot-seed-key => psa-boot-seed-type
+   )
+
+   psa-client-id-nspe-type = -2147483648...0
+   psa-client-id-spe-type = 1..2147483647
+
+   psa-client-id-type = psa-client-id-nspe-type / psa-client-id-spe-type
+
+   psa-client-id = (
+       psa-client-id-key => psa-client-id-type
+   )
+
+   psa-certification-reference-type = text .regexp "[0-9]{13}-[0-9]{5}"
+
+   psa-certification-reference = (
+       ? psa-certification-reference-key =>
+           psa-certification-reference-type
+   )
+
+   psa-implementation-id-type = bytes .size 32
+
+   psa-implementation-id = (
+       psa-implementation-id-key => psa-implementation-id-type
+   )
+
+   psa-instance-id-type = bytes .size 33
+
+   psa-instance-id = (
+       ueid-label => psa-instance-id-type
+   )
+
+   psa-nonce = (
+       nonce-label => psa-hash-type
+   )
+
+   psa-profile-type = "http://arm.com/psa/2.0.0"
+
+   psa-profile = (
+       profile-label => psa-profile-type
+   )
+
+   psa-lifecycle-unknown-type = 0x0000..0x00ff
+   psa-lifecycle-assembly-and-test-type = 0x1000..0x10ff
+   psa-lifecycle-psa-rot-provisioning-type = 0x2000..0x20ff
+   psa-lifecycle-secured-type = 0x3000..0x30ff
+   psa-lifecycle-non-psa-rot-debug-type = 0x4000..0x40ff
+   psa-lifecycle-recoverable-psa-rot-debug-type = 0x5000..0x50ff
+   psa-lifecycle-decommissioned-type = 0x6000..0x60ff
+
+   psa-lifecycle-type =
+       psa-lifecycle-unknown-type /
+       psa-lifecycle-assembly-and-test-type /
+       psa-lifecycle-psa-rot-provisioning-type /
+       psa-lifecycle-secured-type /
+       psa-lifecycle-non-psa-rot-debug-type /
+       psa-lifecycle-recoverable-psa-rot-debug-type /
+       psa-lifecycle-decommissioned-type
+
+   psa-lifecycle = (
+       psa-lifecycle-key => psa-lifecycle-type
+   )
+
+   psa-software-component = {
+     ? &(measurement-type: 1) => text
+       &(measurement-value: 2) => psa-hash-type
+     ? &(version: 4) => text
+       &(signer-id: 5) => psa-hash-type
+     ? &(measurement-desc: 6) => text
+   }
+
+   psa-software-components = (
+       psa-software-components-key => [ + psa-software-component ]
+   )
+
+   psa-verification-service-indicator-type = text
+
+   psa-verification-service-indicator = (
+       ? psa-verification-service-indicator-key =>
+           psa-verification-service-indicator-type
+   )
+
+
+
+
+   Internal_Types = Sig_structure / Enc_structure / MAC_structure
+
+   label = int / tstr
+   values = any
+
+   COSE_Messages = COSE_Untagged_Message / COSE_Tagged_Message
+
+   COSE_Untagged_Message = COSE_Sign / COSE_Sign1 /
+       COSE_Encrypt / COSE_Encrypt0 /
+       COSE_Mac / COSE_Mac0
+
+   COSE_Tagged_Message = COSE_Sign_Tagged / COSE_Sign1_Tagged /
+       COSE_Encrypt_Tagged / COSE_Encrypt0_Tagged /
+       COSE_Mac_Tagged / COSE_Mac0_Tagged
+
+   Headers = (
+       protected : empty_or_serialized_map,
+       unprotected : header_map
+   )
+
+   header_map = {
+       Generic_Headers,
+       * label => values
+   }
+
+   empty_or_serialized_map = bstr .cbor header_map / bstr .size 0
+
+   Generic_Headers = (
+       ? 1 => int / tstr,  ; algorithm identifier
+       ? 2 => [+label],    ; criticality
+       ? 3 => tstr / int,  ; content type
+       ? 4 => bstr,        ; key identifier
+       ? ( 5 => bstr //    ; IV
+           6 => bstr )     ; Partial IV
+   )
+
+   COSE_Sign_Tagged = #6.98(COSE_Sign)
+
+   COSE_Sign = [
+       Headers,
+       payload : bstr / nil,
+       signatures : [+ COSE_Signature]
+   ]
+
+   COSE_Signature =  [
+       Headers,
+       signature : bstr
+   ]
+
+   COSE_Sign1_Tagged = #6.18(COSE_Sign1)
+
+   COSE_Sign1 = [
+       Headers,
+       payload : bstr / nil,
+       signature : bstr
+   ]
+
+   Sig_structure = [
+       context : "Signature" / "Signature1",
+       body_protected : empty_or_serialized_map,
+       ? sign_protected : empty_or_serialized_map,
+       external_aad : bstr,
+       payload : bstr
+   ]
+
+   COSE_Encrypt_Tagged = #6.96(COSE_Encrypt)
+
+   COSE_Encrypt = [
+       Headers,
+       ciphertext : bstr / nil,
+       recipients : [+COSE_recipient]
+   ]
+
+   COSE_recipient = [
+       Headers,
+       ciphertext : bstr / nil,
+       ? recipients : [+COSE_recipient]
+   ]
+
+   COSE_Encrypt0_Tagged = #6.16(COSE_Encrypt0)
+
+   COSE_Encrypt0 = [
+       Headers,
+       ciphertext : bstr / nil,
+   ]
+
+   Enc_structure = [
+       context : "Encrypt" / "Encrypt0" / "Enc_Recipient" /
+           "Mac_Recipient" / "Rec_Recipient",
+       protected : empty_or_serialized_map,
+       external_aad : bstr
+   ]
+
+   COSE_Mac_Tagged = #6.97(COSE_Mac)
+
+   COSE_Mac = [
+      Headers,
+      payload : bstr / nil,
+      tag : bstr,
+      recipients : [+COSE_recipient]
+   ]
+
+   COSE_Mac0_Tagged = #6.17(COSE_Mac0)
+
+   COSE_Mac0 = [
+      Headers,
+      payload : bstr / nil,
+      tag : bstr,
+   ]
+
+   MAC_structure = [
+        context : "MAC" / "MAC0",
+        protected : empty_or_serialized_map,
+        external_aad : bstr,
+        payload : bstr
+   ]
+
+   COSE_Key = {
+       1 => tstr / int,          ; kty
+       ? 2 => bstr,              ; kid
+       ? 3 => tstr / int,        ; alg
+       ? 4 => [+ (tstr / int) ], ; key_ops
+       ? 5 => bstr,              ; Base IV
+       * label => values
+   }
+
+   COSE_KeySet = [+COSE_Key]
+
 Acknowledgments
 
    TODO acknowledge.
-
-   -- vim: tw=72 ts=4 sw=4 et
 
 Authors' Addresses
 
