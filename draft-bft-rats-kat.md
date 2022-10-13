@@ -121,8 +121,8 @@ in {{Section 8 of -cbor}} and {{Appendix G of -cddl}}.
 
 In an architecture for key attestation there are three or more parties communicating with
 each other. From a key attestation point of view, there are the Key Attestation Service,
-the Presenter and the Recipient. Additional parties are added when considering attestation-
-related entities.
+the Presenter and the Recipient. Additional parties are added when considering 
+attestation-related entities.
 
 ~~~aasvg
  +----------------------------------+
